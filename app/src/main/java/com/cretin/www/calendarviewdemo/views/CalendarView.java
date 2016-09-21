@@ -36,7 +36,7 @@ public class CalendarView extends LinearLayout {
 
     private int defaultWidth = 100;
 
-    private String[] mPaintDays = new String[]{"2016 9 23", "2016 9 20", "2016 9 18",};
+    private String[] mPaintDays;
 
     //创建一个二维数组来存放显示日期的控件
     private TextView[][] days = new TextView[5][7];
@@ -105,40 +105,41 @@ public class CalendarView extends LinearLayout {
 
     public void setmPaintDays(String[] mPaintDays) {
         this.mPaintDays = mPaintDays;
-        drawOval(mPaintDays);
     }
 
     private void drawOval(String[] mPaintDays) {
-        for (String s:mPaintDays) {
-            int year = Integer.parseInt(s.split(" ")[0]);
-            int month = Integer.parseInt(s.split(" ")[1]);
-            int day = Integer.parseInt(s.split(" ")[2]);
-            HH:for (int i = 0; i < 5; i++) {
-                for (int j = 0; j < 7; j++) {
-                    if (i == 0) {
-                        if (j >= getFisrtDayOfMonth(currYear, currMonth) - 1) {
-                            if(firstDayCopy == day&&month == currMonth && year == currYear){
-                                days[i][j].setBackgroundDrawable(getResources().getDrawable(R.mipmap.day_bg));
-                                days[i][j].setTextColor(Color.WHITE);
-                                firstDayCopy = 1;
-                                break HH;
+        if (mPaintDays != null)
+            for (String s : mPaintDays) {
+                int year = Integer.parseInt(s.split(" ")[0]);
+                int month = Integer.parseInt(s.split(" ")[1]);
+                int day = Integer.parseInt(s.split(" ")[2]);
+                HH:
+                for (int i = 0; i < 5; i++) {
+                    for (int j = 0; j < 7; j++) {
+                        if (i == 0) {
+                            if (j >= getFisrtDayOfMonth(currYear, currMonth) - 1) {
+                                if (firstDayCopy == day && month == currMonth && year == currYear) {
+                                    days[i][j].setBackgroundDrawable(getResources().getDrawable(R.mipmap.day_bg));
+                                    days[i][j].setTextColor(Color.WHITE);
+                                    firstDayCopy = 1;
+                                    break HH;
+                                }
+                                firstDayCopy++;
                             }
-                            firstDayCopy++;
-                        }
-                    } else {
-                        if (firstDayCopy <= getDaysOfMonth(currYear, currMonth)) {
-                            if(firstDayCopy == day&&month == currMonth && year == currYear){
-                                days[i][j].setBackgroundDrawable(getResources().getDrawable(R.mipmap.day_bg));
-                                days[i][j].setTextColor(Color.WHITE);
-                                firstDayCopy = 1;
-                                break HH;
+                        } else {
+                            if (firstDayCopy <= getDaysOfMonth(currYear, currMonth)) {
+                                if (firstDayCopy == day && month == currMonth && year == currYear) {
+                                    days[i][j].setBackgroundDrawable(getResources().getDrawable(R.mipmap.day_bg));
+                                    days[i][j].setTextColor(Color.WHITE);
+                                    firstDayCopy = 1;
+                                    break HH;
+                                }
+                                firstDayCopy++;
                             }
-                            firstDayCopy++;
                         }
                     }
                 }
             }
-        }
     }
 
     //初始化整体布局
@@ -167,8 +168,8 @@ public class CalendarView extends LinearLayout {
     //初始化头部布局
     private void initHeadView(Context context) {
         //获取当前时间
-        Date dt=new Date();
-        SimpleDateFormat matter=new SimpleDateFormat("yyyy MM dd");
+        Date dt = new Date();
+        SimpleDateFormat matter = new SimpleDateFormat("yyyy MM dd");
         currYear = Integer.parseInt(matter.format(dt).split(" ")[0]);
         currMonth = Integer.parseInt(matter.format(dt).split(" ")[1]);
         currDay = Integer.parseInt(matter.format(dt).split(" ")[2]);
