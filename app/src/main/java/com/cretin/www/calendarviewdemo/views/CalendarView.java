@@ -4,7 +4,9 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.Build;
+import android.text.TextUtils;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
@@ -22,9 +24,9 @@ import java.util.Date;
 /**
  * Created by cretin on 16/9/21.
  */
-public class CalendarView extends LinearLayout {
+public class CalendarView extends LinearLayout implements View.OnTouchListener {
     private Context mContext;
-    private String[] weeks = new String[]{"S", "M", "T", "W", "T", "F", "S"};
+    private String[] weeks = new String[]{"日", "一", "二", "三", "四", "五", "六"};
     private int firstDay = 1;
     private int firstDayCopy = 1;
     private int currYear;
@@ -38,15 +40,15 @@ public class CalendarView extends LinearLayout {
 
     private String[] mPaintDays;
 
+    private String mCurrDate;
+
     //创建一个二维数组来存放显示日期的控件
-    private TextView[][] days = new TextView[5][7];
+    private TextView[][] days = new TextView[6][7];
     private TextView time;
     private ImageView ivLeft;
     private ImageView ivRight;
-
-    //记录最开始的落点
-    private int currX;
-    private int currY;
+    //存错存放TextView的LinearLayout
+    private LinearLayout[] linearLayouts = new LinearLayout[6];
 
     //容器宽度
     private int mPanelWidth;
@@ -66,7 +68,7 @@ public class CalendarView extends LinearLayout {
         init(context);
     }
 
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    @TargetApi( Build.VERSION_CODES.LOLLIPOP )
     public CalendarView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
         init(context);
@@ -81,22 +83,29 @@ public class CalendarView extends LinearLayout {
     //填充数据
     private void putData() {
         time.setText(currYear + "年" + currMonth + "月");
-        for (int i = 0; i < 5; i++) {
-            for (int j = 0; j < 7; j++) {
-                if (i == 0) {
-                    if (j >= getFisrtDayOfMonth(currYear, currMonth) - 1) {
+        for ( int i = 0; i < 6; i++ ) {
+            for ( int j = 0; j < 7; j++ ) {
+                if ( i == 0 ) {
+                    if ( j >= getFisrtDayOfMonth(currYear, currMonth) - 1 ) {
                         days[i][j].setText((firstDay++) + "");
                     } else {
                         days[i][j].setText("");
                     }
                 } else {
-                    if (firstDay <= getDaysOfMonth(currYear, currMonth)) {
+                    if ( firstDay <= getDaysOfMonth(currYear, currMonth) ) {
                         days[i][j].setText((firstDay++) + "");
                     }
                 }
             }
         }
+
+        if ( TextUtils.isEmpty(days[5][0].getText().toString()) ) {
+            linearLayouts[5].setVisibility(GONE);
+        } else {
+            linearLayouts[5].setVisibility(VISIBLE);
+        }
         drawOval(mPaintDays);
+        drawOval(mCurrDate);
     }
 
     public String[] getmPaintDays() {
@@ -107,18 +116,19 @@ public class CalendarView extends LinearLayout {
         this.mPaintDays = mPaintDays;
     }
 
+    //给指定数组画圆
     private void drawOval(String[] mPaintDays) {
-        if (mPaintDays != null)
-            for (String s : mPaintDays) {
+        if ( mPaintDays != null )
+            for ( String s : mPaintDays ) {
                 int year = Integer.parseInt(s.split(" ")[0]);
                 int month = Integer.parseInt(s.split(" ")[1]);
                 int day = Integer.parseInt(s.split(" ")[2]);
                 HH:
-                for (int i = 0; i < 5; i++) {
-                    for (int j = 0; j < 7; j++) {
-                        if (i == 0) {
-                            if (j >= getFisrtDayOfMonth(currYear, currMonth) - 1) {
-                                if (firstDayCopy == day && month == currMonth && year == currYear) {
+                for ( int i = 0; i < 5; i++ ) {
+                    for ( int j = 0; j < 7; j++ ) {
+                        if ( i == 0 ) {
+                            if ( j >= getFisrtDayOfMonth(currYear, currMonth) - 1 ) {
+                                if ( firstDayCopy == day && month == currMonth && year == currYear ) {
                                     days[i][j].setBackgroundDrawable(getResources().getDrawable(R.mipmap.day_bg));
                                     days[i][j].setTextColor(Color.WHITE);
                                     firstDayCopy = 1;
@@ -127,8 +137,8 @@ public class CalendarView extends LinearLayout {
                                 firstDayCopy++;
                             }
                         } else {
-                            if (firstDayCopy <= getDaysOfMonth(currYear, currMonth)) {
-                                if (firstDayCopy == day && month == currMonth && year == currYear) {
+                            if ( firstDayCopy <= getDaysOfMonth(currYear, currMonth) ) {
+                                if ( firstDayCopy == day && month == currMonth && year == currYear ) {
                                     days[i][j].setBackgroundDrawable(getResources().getDrawable(R.mipmap.day_bg));
                                     days[i][j].setTextColor(Color.WHITE);
                                     firstDayCopy = 1;
@@ -142,15 +152,51 @@ public class CalendarView extends LinearLayout {
             }
     }
 
+    //给指定单位画圆
+    private void drawOval(String time) {
+        mCurrDate = time;
+        firstDay = 1;
+        firstDayCopy = 1;
+        int year = Integer.parseInt(time.split(" ")[0]);
+        int month = Integer.parseInt(time.split(" ")[1]);
+        int day = Integer.parseInt(time.split(" ")[2]);
+        HH:
+        for ( int i = 0; i < 5; i++ ) {
+            for ( int j = 0; j < 7; j++ ) {
+                if ( i == 0 ) {
+                    if ( j >= getFisrtDayOfMonth(currYear, currMonth) - 1 ) {
+                        if ( firstDayCopy == day && month == currMonth && year == currYear ) {
+                            days[i][j].setBackgroundDrawable(getResources().getDrawable(R.mipmap.day_bg));
+                            days[i][j].setTextColor(Color.WHITE);
+                            firstDayCopy = 1;
+                            break HH;
+                        }
+                        firstDayCopy++;
+                    }
+                } else {
+                    if ( firstDayCopy <= getDaysOfMonth(currYear, currMonth) ) {
+                        if ( firstDayCopy == day && month == currMonth && year == currYear ) {
+                            days[i][j].setBackgroundDrawable(getResources().getDrawable(R.mipmap.day_bg));
+                            days[i][j].setTextColor(Color.WHITE);
+                            firstDayCopy = 1;
+                            break HH;
+                        }
+                        firstDayCopy++;
+                    }
+                }
+            }
+        }
+    }
+
     //初始化整体布局
     private void initBodyView(Context context) {
         int margin = (mPanelWidth - 7 * defaultWidth) / 14;
         setPadding(0, 50, 0, 50 - margin);
-        for (int i = 0; i < 5; i++) {
-            LinearLayout llWeek = new LinearLayout(context);
-            llWeek.setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-            llWeek.setOrientation(HORIZONTAL);
-            for (int j = 0; j < 7; j++) {
+        for ( int i = 0; i < 6; i++ ) {
+            linearLayouts[i] = new LinearLayout(context);
+            linearLayouts[i].setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            linearLayouts[i].setOrientation(HORIZONTAL);
+            for ( int j = 0; j < 7; j++ ) {
                 days[i][j] = new TextView(context);
                 LayoutParams lpWeek = new LayoutParams(defaultWidth, defaultWidth);
                 lpWeek.weight = 1;
@@ -159,10 +205,12 @@ public class CalendarView extends LinearLayout {
                 days[i][j].setTextColor(mDaysColor);
                 days[i][j].setTextSize(14);
                 days[i][j].setGravity(Gravity.CENTER);
-                llWeek.addView(days[i][j], lpWeek);
+                linearLayouts[i].addView(days[i][j], lpWeek);
+                days[i][j].setOnTouchListener(this);
             }
-            addView(llWeek);
+            addView(linearLayouts[i]);
         }
+        drawOval(mCurrDate);
     }
 
     //初始化头部布局
@@ -173,7 +221,7 @@ public class CalendarView extends LinearLayout {
         currYear = Integer.parseInt(matter.format(dt).split(" ")[0]);
         currMonth = Integer.parseInt(matter.format(dt).split(" ")[1]);
         currDay = Integer.parseInt(matter.format(dt).split(" ")[2]);
-
+        mCurrDate = matter.format(dt);
         int margin = (mPanelWidth - 7 * defaultWidth) / 14;
         LinearLayout llHead = new LinearLayout(context);
         LayoutParams lp = new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -201,7 +249,7 @@ public class CalendarView extends LinearLayout {
         llWeek.setPadding(0, 60, 0, 0);
         llWeek.setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         llWeek.setOrientation(HORIZONTAL);
-        for (int i = 0; i < 7; i++) {
+        for ( int i = 0; i < 7; i++ ) {
             TextView week = new TextView(context);
             LayoutParams lpWeek = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             lpWeek.weight = 1;
@@ -218,7 +266,7 @@ public class CalendarView extends LinearLayout {
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        if (mPanelWidth == 0) {
+        if ( mPanelWidth == 0 ) {
             int widthSize = MeasureSpec.getSize(widthMeasureSpec);
             int widthMode = MeasureSpec.getMode(widthMeasureSpec);
 
@@ -226,9 +274,9 @@ public class CalendarView extends LinearLayout {
             int heightMode = MeasureSpec.getMode(heightMeasureSpec);
 
             int width = Math.min(widthSize, heightSize);
-            if (widthMode == MeasureSpec.UNSPECIFIED) {
+            if ( widthMode == MeasureSpec.UNSPECIFIED ) {
                 width = heightSize;
-            } else if (heightMode == MeasureSpec.UNSPECIFIED) {
+            } else if ( heightMode == MeasureSpec.UNSPECIFIED ) {
                 width = widthSize;
             }
             mPanelWidth = width;
@@ -255,37 +303,93 @@ public class CalendarView extends LinearLayout {
         }
     }
 
+    //记录最开始的落点
+    private int currX;
+    private int currY;
+    //记录最开始的落点
+    private int currXs;
+    private int currYs;
+    //记录最开始的落点
+    private int currX1;
+    private int currY1;
 
-    //开启手势
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        switch (event.getAction()) {
+        switch ( event.getAction() ) {
+            case MotionEvent.ACTION_DOWN:
+                currXs = ( int ) event.getX();
+                currYs = ( int ) event.getY();
+                break;
             case MotionEvent.ACTION_UP:
-                int x = (int) event.getX();
-                int y = (int) event.getY();
-                if (Math.abs(x - currX) > Math.abs(y - currY) + 50) {
-                    //在水平方向上
-                    if (x > currX) {
+                int x1 = ( int ) event.getX();
+                int y1 = ( int ) event.getY();
+                if ( Math.abs(x1 - currXs) > 5 && Math.abs(y1 - currYs) > 5 ) {
+//                    //在水平方向上
+                    if ( x1 > currXs ) {
                         //右滑动
                         backMonth();
+                        Log.e("HHHHHH", "右-滑动");
                     } else {
                         //左滑动
                         preMonth();
+                        Log.e("HHHHHH", "左-滑动");
                     }
                 }
-                break;
-            case MotionEvent.ACTION_DOWN:
-                currX = (int) event.getX();
-                currY = (int) event.getY();
                 break;
         }
         return true;
     }
 
+    @Override
+    public boolean onTouch(View v, MotionEvent event) {
+        switch ( event.getAction() ) {
+            case MotionEvent.ACTION_DOWN:
+                currX1 = ( int ) event.getX();
+                currY1 = ( int ) event.getY();
+                break;
+            case MotionEvent.ACTION_UP:
+                int x1 = ( int ) event.getX();
+                int y1 = ( int ) event.getY();
+                if ( Math.abs(x1 - currX1) < 5 && Math.abs(y1 - currY1) < 5 ) {
+                    Log.e("HHHHHHHHHHHH", "点击");
+                    clickTextView(v);
+                }
+                break;
+        }
+        return true;
+    }
+
+    @Override
+    public boolean onInterceptTouchEvent(MotionEvent event) {
+        switch ( event.getAction() ) {
+            case MotionEvent.ACTION_DOWN:
+                currX = ( int ) event.getX();
+                currY = ( int ) event.getY();
+                break;
+            case MotionEvent.ACTION_UP:
+                int x1 = ( int ) event.getX();
+                int y1 = ( int ) event.getY();
+                if ( Math.abs(x1 - currX) > 5 && Math.abs(y1 - currY) > 5 ) {
+//                    //在水平方向上
+                    if ( x1 > currX ) {
+                        //右滑动
+                        backMonth();
+                        Log.e("HHHHHH", "右滑动");
+                    } else {
+                        //左滑动
+                        preMonth();
+                        Log.e("HHHHHH", "左滑动");
+                    }
+                }
+                break;
+        }
+        return false;
+    }
+
     //往前计算一个月
     private void backMonth() {
         clearData();
-        if (currMonth != 1) {
+        if ( currMonth != 1 ) {
             currMonth--;
         } else {
             currYear--;
@@ -298,9 +402,19 @@ public class CalendarView extends LinearLayout {
     private void clearData() {
         firstDay = 1;
         firstDayCopy = 1;
-        for (int i = 0; i < 5; i++) {
-            for (int j = 0; j < 7; j++) {
+        for ( int i = 0; i < 6; i++ ) {
+            for ( int j = 0; j < 7; j++ ) {
                 days[i][j].setText("");
+                days[i][j].setBackgroundDrawable(null);
+                days[i][j].setTextColor(mDaysColor);
+            }
+        }
+    }
+
+    //清除所有背景
+    private void clearAllBackground() {
+        for ( int i = 0; i < 6; i++ ) {
+            for ( int j = 0; j < 7; j++ ) {
                 days[i][j].setBackgroundDrawable(null);
                 days[i][j].setTextColor(mDaysColor);
             }
@@ -310,13 +424,17 @@ public class CalendarView extends LinearLayout {
     //往后计算一个月
     private void preMonth() {
         clearData();
-        if (currMonth != 12) {
+        if ( currMonth != 12 ) {
             currMonth++;
         } else {
             currYear++;
             currMonth = 1;
         }
         putData();
+    }
+
+    public String getSelectedData() {
+        return mCurrDate;
     }
 
     //获取指定年份指定月份的第一天的位置
@@ -333,11 +451,21 @@ public class CalendarView extends LinearLayout {
         return cal.get(Calendar.DAY_OF_WEEK);
     }
 
+
     //获取指定年份指定月份的第一天的位置
     private int getDaysOfMonth(int year, int month) {
         Calendar cal = Calendar.getInstance();
         cal.set(Calendar.YEAR, year);
         cal.set(Calendar.MONTH, month - 1);
         return cal.getActualMaximum(Calendar.DATE);
+    }
+
+    public void clickTextView(View v) {
+        TextView textView = ( TextView ) v;
+        if ( TextUtils.isEmpty(textView.getText().toString()) )
+            return;
+        clearAllBackground();
+        String timeStr = time.getText().toString().replace("年", " ").replace("月", " ");
+        drawOval(timeStr + textView.getText().toString());
     }
 }
