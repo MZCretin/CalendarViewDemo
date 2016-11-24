@@ -289,7 +289,7 @@ public class CalendarView extends LinearLayout {
             currMonth--;
         } else {
             currYear--;
-            currMonth = 1;
+            currMonth = 12;
         }
         putData();
     }
